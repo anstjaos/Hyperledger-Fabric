@@ -1,0 +1,80 @@
+version: '2'
+
+volumes:
+  orderer2.example.com:
+
+networks:
+  byfn:
+
+services:
+  orderer2.example.com:
+    image: hyperledger/fabric-orderer
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=info
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererOrgMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=false
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      # kafka
+      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+      - ORDERER_KAFKA_VERBOSE=true
+    volumes:
+      - ./genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer2.example.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/:/var/hyperledger/orderer/tls
+      - orderer2.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+
+    command: orderer
+    depends_on:
+      - kafka3.example.com
+    networks:
+      - byfn
+    extra_hosts:
+      - "peer0.org0.example.com:10.1.1.11"
+      - "peer1.org0.example.com:10.1.1.12"
+      - "peer2.org1.example.com:10.1.1.21"
+      - "peer3.org1.example.com:10.1.1.22"
+
+  zookeeper2.example.com:
+    image: hyperledger/fabric-zookeeper
+    environment:
+      - ZOO_SERVERS=server.1=10.1.1.31:2888:3888 server.2=10.1.1.41:2888:3888 server.3=0.0.0.0:2888:3888
+      - ZOO_MY_ID=3
+    restart: always
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    networks:
+      - byfn
+
+  kafka3.example.com:
+    image: hyperledger/fabric-kafka
+    restart: always
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=10.1.1.51
+      - KAFKA_ADVERTISED_PORT=9092
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+      - KAFKA_MIN_INSYNC_REPLICAS=1
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=4
+      - KAFKA_ZOOKEEPER_CONNECT=10.1.1.31:2181,10.1.1.41:2181,0.0.0.0:2181
+      - KAFKA_BROKER_ID=3
+    ports:
+      - 9092:9092
+      - 9093:9093
+    depends_on:
+      - zookeeper2.example.com
+    networks:
+      - byfn
