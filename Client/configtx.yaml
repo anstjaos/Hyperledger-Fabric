@@ -1,0 +1,129 @@
+---
+################################################################################
+#
+#   ORGANIZATIONS
+#
+#   This section defines the organizational identities that can be referenced
+#   in the configuration profiles.
+#
+################################################################################
+Organizations:
+
+    - &OrdererOrg
+        Name: OrdererOrg
+
+        ID: OrdererOrgMSP
+
+        MSPDir: crypto-config/ordererOrganizations/example.com/msp/
+
+    - &Org0
+        Name: Org0MSP
+
+        ID: Org0MSP
+
+        MSPDir: crypto-config/peerOrganizations/org0.example.com/msp/
+
+        AnchorPeers:
+          - Host: peer0.org0.example.com
+            Port: 7051
+
+    - &Org1
+        Name: Org1MSP
+
+        ID: Org1MSP
+
+        MSPDir: crypto-config/peerOrganizations/org1.example.com/msp/
+
+        AnchorPeers:
+          - Host: peer2.org1.example.com
+            Port: 7051
+
+################################################################################
+#
+#   ORDERER
+#
+#   This section defines the values to encode into a config transaction or
+#   genesis block for orderer related parameters.
+#
+################################################################################
+Orderer: &OrdererDefaults
+
+    OrdererType: kafka
+
+    Addresses:
+        - orderer0.example.com:7050
+        - orderer1.example.com:7050
+        - orderer2.example.com:7050
+
+    BatchTimeout: 1s
+
+    MaxChannels: 0
+
+    BatchSize:
+
+        MaxMessageCount: 30
+
+        AbsoluteMaxBytes: 99 MB
+
+        PreferredMaxBytes: 512 KB
+
+    Kafka:
+
+        Brokers:
+            - kafka0.example.com:9092
+            - kafka1.example.com:9092
+            - kafka2.example.com:9092
+            - kafka3.example.com:9092
+
+    Organizations:
+
+################################################################################
+#
+#   APPLICATION
+#
+#   This section defines the values to encode into a config transaction or
+#   genesis block for application-related parameters.
+#
+################################################################################
+
+Application: &ApplicationDefaults
+
+
+    # Organizations lists the orgs participating on the application side of the
+    # network.
+    Organizations:
+
+
+
+################################################################################
+#
+#   PROFILES
+#
+#   Different configuration profiles may be encoded here to be specified as
+#   parameters to the configtxgen tool. The profiles which specify consortiums
+#   are to be used for generating the orderer genesis block. With the correct
+#   consortium members defined in the orderer genesis block, channel creation
+#   requests may be generated with only the org member names and a consortium
+#   name.
+#
+################################################################################
+Profiles:
+
+    TwoOrgsOrdererGenesis:
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *Org0
+                    - *Org1
+
+    TwoOrgsChannel:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org0
+                - *Org1
