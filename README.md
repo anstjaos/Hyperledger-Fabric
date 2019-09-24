@@ -13,9 +13,9 @@ Peer 컨테이너를 모두 구동해주세요.
   
 ## 3. CLI 실행
 각 peer의 CLI를 실행하여 명령어를 수행합니다.  
-<pre><code> docker exec -it cli /bin/bash  
+<pre><code>docker exec -it cli /bin/bash  
 cd channel-artifacts  
-</code><pre>  
+</code></pre>  
   
 ### peer0
 <pre><code> ./create-channel.sh  
